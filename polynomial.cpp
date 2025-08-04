@@ -1,6 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <initializer_list>
+#include <sstream>
+#include <string>
 // polynomial.cpp
 
 
@@ -118,6 +120,7 @@ public:
 
 
     // 4) A brute‐force reduce() that peels off any linear factor x–α you find:
+    // It could be interesting to implement a reduce() method that finds and removes linear factors of the polynomial. and then factors the polynomial accordingly.
     Polynomial& reduce() {
         auto elems = all_field_elements<Field>();
         for (auto const& a : elems) {
@@ -169,10 +172,11 @@ public:
 
 
 int main() {
-    using F5 = Mod<5>;
+
+    using F5 = Mod<7>; // change your field here
 
     // 1) A reducible polynomial: x² + 1 over F₅ has roots 2 and 3
-    Polynomial<F5> p1{ F5{1}, F5{0}, F5{1} };   // for x^2+1
+    Polynomial<F5> p1{F5{73} ,F5{6}, F5{9}, F5{1} };   // for x^2+1
     Polynomial<F5> p2{ F5{1}, F5{1}, F5{1} };   // for x^2+x+1
     std::cout << "Testing f(x)=x^2+1 mod 5:\n";
     for(int i = 0; i < 5; ++i) {

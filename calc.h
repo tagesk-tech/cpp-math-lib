@@ -59,19 +59,15 @@ VectorXd newtons_method(const std::function<double(const VectorXd&)>& f,
 
 int main(){
     using Vec = Eigen::VectorXd;
-    // f(x,y) = (x−3)² + (y+1)²  has ∇f=0 at (3,−1)
-    auto f = [](const Vec& x){
-      return std::pow(x[0] - 3.0, 2) //power function from the cmath library
-             + std::pow(x[1] + 1.0, 2); 
-           + std::pow(x[1] + 1.0, 2);
+
+    auto rosen = [](const Vec& x){
+      double X = x[0], Y = x[1];
+      return std::pow(1 - X, 2) + 100 * std::pow(Y - X*X, 2);
     };
 
     Vec x0(2);
-    x0 << 0.0, 0.0;               // start at (0,0)
-    Vec root = newtons_method(f, x0);
-
-    std::cout << "Converged to: [" 
-              << root[0] << ", " 
-              << root[1] << "]\n";
-    return 0;
+    x0 << -1.2, 1.0;               // standard starting point
+    Vec r = newtons_method(rosen, x0);
+    std::cout << "Rosenbrock → [" << r[0] << ", " << r[1] << "]\n";
 }
+

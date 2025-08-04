@@ -2,6 +2,7 @@
 #include <vector>
 #include <algorithm>    // for std::swap
 #include <stdexcept>    // for std::runtime_error
+#include <Eigen/Dense>    // for Eigen::MatrixXd, Eigen::VectorXd
 
 using namespace std;
 

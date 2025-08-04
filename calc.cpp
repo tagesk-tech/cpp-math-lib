@@ -1,57 +1,77 @@
-// This file is part of the C++ library for basic calculus operations. 
-// like gradients, hessians, and other calculus related operations.  
-
-#include <iostream>
-#include <vector>
-#include <cmath>
+#include <eigen3/Eigen/Dense>
 #include <functional>
+#include <iostream>
+#include <cmath>        // for std::pow
+#include <vector>
+using namespace Eigen;
 
-// example on how the function and gradient and hessian should look like
+// f: Rⁿ → R (scalar)
+// using Eigen::VectorXd; using Eigen::MatrixXd;
 
-
-std::vector<double> compute_gradient(
-    const std::function<double(const std::vector<double>&)>& f, // the function to compute the gradient of
-    int n, // the number of variables in the function
-    const std::vector<double>& x0, // the point at which to compute the gradient
-    double h = 1e-6 // the step size for finite difference approximation
-) {
-    std::vector<double> gradient(n);
-    for (int i = 0; i < n; ++i) {
-        std::vector<double> x_plus = x0;
-        std::vector<double> x_minus = x0;
-        x_plus[i] += h;
-        x_minus[i] -= h;
-        gradient[i] = (f(x_plus) - f(x_minus)) / (2 * h);
-    }
-    return gradient;   
+// compute gradient via central differences
+VectorXd compute_gradient(const std::function<double(const VectorXd&)>& f,
+                          const VectorXd& x, double h = 1e-6)
+{
+  int n = x.size();
+  VectorXd grad(n);
+  for(int i=0;i<n;++i){
+    VectorXd xp = x, xm = x;
+    xp[i] += h;  xm[i] -= h;
+    grad[i] = (f(xp) - f(xm)) / (2*h);
+  }
+  return grad;
 }
 
-// calculates teh hessian matrix of a function at a given point using finite difference approximation
-std::vector<std::vector<double>> compute_hessian(
-    const std::function<double(const std::vector<double>&)>& f, // the function to compute the hessian of
-    int n, // the number of variables in the function
-    const std::vector<double>& x0, // the point at which to compute the hessian
-    double h = 1e-6 // the step size for finite difference approximation
-) {
-    std::vector<std::vector<double>> hessian(n, std::vector<double>(n));
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < n; ++j) {
-            std::vector<double> x_plus_i = x0;
-            std::vector<double> x_minus_i = x0;
-            std::vector<double> x_plus_j = x0;
-            std::vector<double> x_minus_j = x0;
-            x_plus_i[i] += h;
-            x_minus_i[i] -= h;
-            x_plus_j[j] += h;
-            x_minus_j[j] -= h;
-
-            double f_plus_plus = f(x_plus_i);
-            double f_plus_minus = f(x_plus_j);
-            double f_minus_plus = f(x_minus_i);
-            double f_minus_minus = f(x_minus_j);
-
-            hessian[i][j] = (f_plus_plus - f_plus_minus - f_minus_plus + f_minus_minus) / (4 * h * h);
-        }
+// compute Hessian via central differences
+MatrixXd compute_hessian(const std::function<double(const VectorXd&)>& f,
+                         const VectorXd& x, double h = 1e-6)
+{
+  int n = x.size();
+  MatrixXd H(n,n);
+  for(int i=0;i<n;++i){
+    for(int j=0;j<n;++j){
+      VectorXd xpp = x, xpm = x, xmp = x, xmm = x;
+      xpp[i] += h; xpp[j] += h;
+      xpm[i] += h; xpm[j] -= h;
+      xmp[i] -= h; xmp[j] += h;
+      xmm[i] -= h; xmm[j] -= h;
+      H(i,j) = ( f(xpp) - f(xpm) - f(xmp) + f(xmm) ) / (4*h*h);
     }
-    return hessian;
+  }
+  return H;
+}
+
+VectorXd newtons_method(const std::function<double(const VectorXd&)>& f,
+                        VectorXd x0, double tol = 1e-6, int max_iter = 100)
+{
+  VectorXd x = x0;
+  for(int iter=0; iter<max_iter; ++iter){
+    VectorXd g = compute_gradient(f, x);
+    MatrixXd H = compute_hessian(f, x);
+    // for SPD H:
+    VectorXd dx = H.ldlt().solve(-g); //since the Hessian is symmetric you can quickly solve using LDL^T factorisation. 
+    x += dx;
+    if(dx.norm() < tol) break;
+  }
+  return x;
+}
+
+
+int main(){
+    using Vec = Eigen::VectorXd;
+    // f(x,y) = (x−3)² + (y+1)²  has ∇f=0 at (3,−1)
+    auto f = [](const Vec& x){
+      return std::pow(x[0] - 3.0, 2) //power function from the cmath library
+             + std::pow(x[1] + 1.0, 2); 
+           + std::pow(x[1] + 1.0, 2);
+    };
+
+    Vec x0(2);
+    x0 << 0.0, 0.0;               // start at (0,0)
+    Vec root = newtons_method(f, x0);
+
+    std::cout << "Converged to: [" 
+              << root[0] << ", " 
+              << root[1] << "]\n";
+    return 0;
 }

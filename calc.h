@@ -9,33 +9,34 @@ using namespace Eigen;
 // using Eigen::VectorXd; using Eigen::MatrixXd;
 
 // compute gradient via central differences
+
 VectorXd compute_gradient(const std::function<double(const VectorXd&)>& f,
                           const VectorXd& x, double h = 1e-6)
 {
-  int n = x.size();
-  VectorXd grad(n);
-  for(int i=0;i<n;++i){
-    VectorXd xp = x, xm = x;
-    xp[i] += h;  xm[i] -= h;
-    grad[i] = (f(xp) - f(xm)) / (2*h);
+  int n = x.size();     // size of the input vector
+  VectorXd grad(n); // gradient is a vector of the same size as x
+  for(int i=0;i<n;++i){ // loop over each component of the vector
+    VectorXd xp = x, xm = x; // create copies of x for perturbations
+    xp[i] += h;  xm[i] -= h; // perturb the i-th component of x
+    grad[i] = (f(xp) - f(xm)) / (2*h); // central difference formula for the i-th component of the gradient
   }
   return grad;
 }
 
 // compute Hessian via central differences
-MatrixXd compute_hessian(const std::function<double(const VectorXd&)>& f,
+MatrixXd compute_hessian(const std::function<double(const VectorXd&)>& f, // the function and vector are referenced and const because i dont want to mutate them
                          const VectorXd& x, double h = 1e-6)
 {
   int n = x.size();
-  MatrixXd H(n,n);
-  for(int i=0;i<n;++i){
+  MatrixXd H(n,n); // Hessian is a square matrix of size n x n
+  for(int i=0;i<n;++i) {
     for(int j=0;j<n;++j){
-      VectorXd xpp = x, xpm = x, xmp = x, xmm = x;
-      xpp[i] += h; xpp[j] += h;
-      xpm[i] += h; xpm[j] -= h;
-      xmp[i] -= h; xmp[j] += h;
-      xmm[i] -= h; xmm[j] -= h;
-      H(i,j) = ( f(xpp) - f(xpm) - f(xmp) + f(xmm) ) / (4*h*h);
+      VectorXd xpp = x, xpm = x, xmp = x, xmm = x; // create copies of x for perturbations
+      xpp[i] += h; xpp[j] += h; // perturb both i and j
+      xpm[i] += h; xpm[j] -= h; // perturb i and negate j
+      xmp[i] -= h; xmp[j] += h; // negate i and perturb j
+      xmm[i] -= h; xmm[j] -= h; // negate both i and j
+      H(i,j) = ( f(xpp) - f(xpm) - f(xmp) + f(xmm) ) / (4*h*h); // central difference formula for second derivatives
     }
   }
   return H;
@@ -56,8 +57,8 @@ VectorXd newtons_method(const std::function<double(const VectorXd&)>& f,
   return x;
 }
 
-
-int main(){
+/*
+ int main(){
     using Vec = Eigen::VectorXd;
 
     auto rosen = [](const Vec& x){
@@ -71,3 +72,4 @@ int main(){
     std::cout << "Rosenbrock → [" << r[0] << ", " << r[1] << "]\n";
 }
 
+*/
